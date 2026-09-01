@@ -11,13 +11,12 @@
     <!-- 2. AR.js (穩定版 CDN) -->
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/aframe/build/aframe-ar.js"></script>
     
-    <!-- 3. A-Frame Extras (用於播放 3D 模型動畫) -->
+    <!-- 3. A-Frame Extras (動畫組件) -->
     <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
     
     <style>
       body { margin: 0; overflow: hidden; font-family: '微軟正黑體', sans-serif; }
       
-      /* 拍照按鈕樣式 */
       #capture-btn {
         position: absolute;
         bottom: 30px;
@@ -34,7 +33,6 @@
       }
       #capture-btn:active { background-color: #4CAF50; }
       
-      /* 載入與提示訊息樣式 */
       #status-message {
         position: absolute;
         top: 20px;
@@ -53,41 +51,40 @@
     <div id="status-message">照片上傳中...</div>
     <button id="capture-btn" onclick="takeSnapshot()"></button>
 
-    <!-- AR 場景設定 -->
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;" vr-mode-ui="enabled: false">
+    <!-- 注意：此處加上了 renderer="preserveDrawingBuffer: true;" -->
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;" renderer="preserveDrawingBuffer: true;" vr-mode-ui="enabled: false">
       
-      <!-- 虛擬生態區：蝴蝶、蜜蜂、黑水虻、鼠婦 -->
-      
-      <!-- 生態 1：蝴蝶 -->
-      <a-entity position="0 1 -3" animation="property: position; to: 0 1.5 -3; dir: alternate; dur: 2000; loop: true">
-        <a-box color="hotpink" scale="0.5 0.5 0.5" animation="property: rotation; to: 0 360 0; dur: 3000; loop: true"></a-box>
-        <a-text value="蝴蝶 (Butterfly)" position="-0.5 0.5 0" color="black" scale="0.5 0.5 0.5"></a-text>
-      </a-entity>
+      <!-- 相機與浮動 AR 生態物件 (將物件掛載在相機前方，確保必定看得見) -->
+      <a-entity camera look-controls position="0 0 0">
+        
+        <!-- 生態 1：蝴蝶 (畫面上方) -->
+        <a-entity position="0 0.4 -2" animation="property: position; to: 0 0.5 -2; dir: alternate; dur: 2000; loop: true">
+          <a-box color="hotpink" scale="0.2 0.2 0.2" animation="property: rotation; to: 0 360 0; dur: 3000; loop: true"></a-box>
+          <a-text value="蝴蝶 (Butterfly)" position="-0.4 0.3 0" color="yellow" scale="0.4 0.4 0.4"></a-text>
+        </a-entity>
 
-      <!-- 生態 2：蜜蜂 -->
-      <a-entity position="1.5 0.5 -4" animation="property: position; to: 1 1 -3; dir: alternate; dur: 1500; loop: true">
-        <a-sphere color="yellow" scale="0.3 0.3 0.3"></a-sphere>
-        <a-text value="蜜蜂 (Bee)" position="-0.3 0.4 0" color="black" scale="0.5 0.5 0.5"></a-text>
-      </a-entity>
+        <!-- 生態 2：蜜蜂 (右上) -->
+        <a-entity position="0.6 0.2 -2" animation="property: position; to: 0.5 0.3 -2; dir: alternate; dur: 1500; loop: true">
+          <a-sphere color="yellow" scale="0.15 0.15 0.15"></a-sphere>
+          <a-text value="蜜蜂 (Bee)" position="-0.2 0.2 0" color="yellow" scale="0.4 0.4 0.4"></a-text>
+        </a-entity>
 
-      <!-- 生態 3：黑水虻 -->
-      <a-entity position="-1.5 0 -3" animation="property: rotation; to: 0 0 360; dur: 5000; loop: true">
-        <a-cylinder color="black" scale="0.2 0.5 0.2"></a-cylinder>
-        <a-text value="黑水虻 (BSF)" position="-0.4 0.4 0" color="black" scale="0.5 0.5 0.5"></a-text>
-      </a-entity>
+        <!-- 生態 3：黑水虻 (左上) -->
+        <a-entity position="-0.6 0.2 -2" animation="property: rotation; to: 0 0 360; dur: 5000; loop: true">
+          <a-cylinder color="black" scale="0.1 0.3 0.1"></a-cylinder>
+          <a-text value="黑水虻 (BSF)" position="-0.3 0.2 0" color="yellow" scale="0.4 0.4 0.4"></a-text>
+        </a-entity>
 
-      <!-- 生態 4：鼠婦 -->
-      <a-entity position="0 -0.8 -2" animation="property: position; to: 0.5 -0.8 -2; dir: alternate; dur: 3000; loop: true">
-        <a-dodecahedron color="gray" scale="0.2 0.2 0.2"></a-dodecahedron>
-        <a-text value="鼠婦 (Pill Bug)" position="-0.3 0.3 0" color="black" scale="0.5 0.5 0.5"></a-text>
-      </a-entity>
+        <!-- 生態 4：鼠婦 (畫面下方) -->
+        <a-entity position="0 -0.4 -2" animation="property: position; to: 0.2 -0.4 -2; dir: alternate; dur: 3000; loop: true">
+          <a-dodecahedron color="gray" scale="0.15 0.15 0.15"></a-dodecahedron>
+          <a-text value="鼠婦 (Pill Bug)" position="-0.4 0.2 0" color="yellow" scale="0.4 0.4 0.4"></a-text>
+        </a-entity>
 
-      <!-- 定義相機 -->
-      <a-entity camera></a-entity>
+      </a-entity>
     </a-scene>
 
     <script>
-      // ⚠️ 請務必將此處替換為你重新部署 GAS 後取得的 Web App 網址（結尾需為 /exec）
       const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxyo4Mj1t8m6AxNrySmvQkHY2ffKCYjp8VxozbaWkqsh0YLBVm0CmD4xdxEnijalZci/exec";
 
       function takeSnapshot() {
@@ -95,9 +92,7 @@
         statusMsg.innerText = "處理中...";
         statusMsg.style.display = 'block';
 
-        // 1. 取得裝置的影片畫面 (相機背景)
         const video = document.querySelector('video');
-        // 2. 取得 AR 虛擬物件的 Canvas
         const arCanvas = document.querySelector('.a-canvas');
         
         if (!video || !arCanvas) {
@@ -106,20 +101,19 @@
           return;
         }
 
-        // 3. 建立 Canvas 並合成畫面
         const mergeCanvas = document.createElement('canvas');
         mergeCanvas.width = video.videoWidth || window.innerWidth;
         mergeCanvas.height = video.videoHeight || window.innerHeight;
         const ctx = mergeCanvas.getContext('2d');
 
-        // 繪製相機底圖與 AR 物件
+        // 1. 畫上相機背景畫面
         ctx.drawImage(video, 0, 0, mergeCanvas.width, mergeCanvas.height);
+        
+        // 2. 疊加 AR 繪圖畫面
         ctx.drawImage(arCanvas, 0, 0, mergeCanvas.width, mergeCanvas.height);
 
-        // 將合併後的畫面轉為 Base64
         const base64Data = mergeCanvas.toDataURL('image/png');
 
-        // 4. 使用 fetch 發送 POST 請求至 GAS 後端
         statusMsg.innerText = "正在上傳至雲端硬碟...";
 
         fetch(GAS_WEB_APP_URL, {
