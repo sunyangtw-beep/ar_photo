@@ -1,142 +1,175 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>生態 AR 拍照</title>
+    <title>生態拍照上傳系統</title>
     
-    <!-- 1. A-Frame 核心框架 -->
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    
-    <!-- 2. AR.js (穩定版 CDN) -->
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/aframe/build/aframe-ar.js"></script>
-    
-    <!-- 3. A-Frame Extras (動畫組件) -->
-    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
+    <!-- 核心框架（保留 A-Frame 與 AR.js 以維持相機畫面渲染邏輯） -->
+    <script src="https://aframe.io"></script>
+    <script src="https://jsdelivr.net"></script>
     
     <style>
-      body { margin: 0; overflow: hidden; font-family: '微軟正黑體', sans-serif; }
-      
-      #capture-btn {
-        position: absolute;
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 70px;
-        height: 70px;
-        background-color: rgba(255, 255, 255, 0.8);
-        border: 5px solid #4CAF50;
-        border-radius: 50%;
-        z-index: 9999;
-        cursor: pointer;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-      }
-      #capture-btn:active { background-color: #4CAF50; }
-      
-      #status-message {
-        position: absolute;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 10px 20px;
-        border-radius: 20px;
-        z-index: 9999;
-        display: none;
-      }
+        body { margin: 0; overflow: hidden; font-family: '微軟正黑體', sans-serif; }
+        
+        /* 表單輸入區域（姓名與地點） */
+        #input-container {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            max-width: 320px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 9999;
+        }
+        .input-group { margin-bottom: 10px; }
+        .input-group label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 5px; color: #333; }
+        .input-group input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        
+        /* 拍照按鈕 */
+        #capture-btn {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 70px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 5px solid #4CAF50;
+            border-radius: 50%;
+            z-index: 9999;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        #capture-btn:active { background-color: #4CAF50; }
+        
+        /* 狀態訊息 */
+        #status-message {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            z-index: 9999;
+            display: none;
+            white-space: nowrap;
+        }
     </style>
-  </head>
-  <body>
+</head>
+<body>
+
+    <!-- 欄位輸入介面 -->
+    <div id="input-container">
+        <div class="input-group">
+            <label for="username">拍照人員</label>
+            <input type="text" id="username" placeholder="請輸入姓名">
+        </div>
+        <div class="input-group">
+            <label for="location">地點</label>
+            <input type="text" id="location" placeholder="請輸入地點">
+        </div>
+    </div>
+
     <div id="status-message">照片上傳中...</div>
     <button id="capture-btn" onclick="takeSnapshot()"></button>
-
-    <!-- 注意：此處加上了 renderer="preserveDrawingBuffer: true;" -->
+    
+    <!-- AR 畫面：已取消所有虛擬 3D 生態模組與文字，僅保留純相機背景 -->
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;" renderer="preserveDrawingBuffer: true;" vr-mode-ui="enabled: false">
-      
-      <!-- 相機與浮動 AR 生態物件 (將物件掛載在相機前方，確保必定看得見) -->
-      <a-entity camera look-controls position="0 0 0">
         
-        <!-- 生態 1：蝴蝶 (畫面上方) -->
-        <a-entity position="0 0.4 -2" animation="property: position; to: 0 0.5 -2; dir: alternate; dur: 2000; loop: true">
-          <a-box color="hotpink" scale="0.2 0.2 0.2" animation="property: rotation; to: 0 360 0; dur: 3000; loop: true"></a-box>
-          <a-text value="蝴蝶 (Butterfly)" position="-0.4 0.3 0" color="yellow" scale="0.4 0.4 0.4"></a-text>
-        </a-entity>
-
-        <!-- 生態 2：蜜蜂 (右上) -->
-        <a-entity position="0.6 0.2 -2" animation="property: position; to: 0.5 0.3 -2; dir: alternate; dur: 1500; loop: true">
-          <a-sphere color="yellow" scale="0.15 0.15 0.15"></a-sphere>
-          <a-text value="蜜蜂 (Bee)" position="-0.2 0.2 0" color="yellow" scale="0.4 0.4 0.4"></a-text>
-        </a-entity>
-
-        <!-- 生態 3：黑水虻 (左上) -->
-        <a-entity position="-0.6 0.2 -2" animation="property: rotation; to: 0 0 360; dur: 5000; loop: true">
-          <a-cylinder color="black" scale="0.1 0.3 0.1"></a-cylinder>
-          <a-text value="黑水虻 (BSF)" position="-0.3 0.2 0" color="yellow" scale="0.4 0.4 0.4"></a-text>
-        </a-entity>
-
-        <!-- 生態 4：鼠婦 (畫面下方) -->
-        <a-entity position="0 -0.4 -2" animation="property: position; to: 0.2 -0.4 -2; dir: alternate; dur: 3000; loop: true">
-          <a-dodecahedron color="gray" scale="0.15 0.15 0.15"></a-dodecahedron>
-          <a-text value="鼠婦 (Pill Bug)" position="-0.4 0.2 0" color="yellow" scale="0.4 0.4 0.4"></a-text>
-        </a-entity>
-
-      </a-entity>
     </a-scene>
 
-    <script>
-      const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxyo4Mj1t8m6AxNrySmvQkHY2ffKCYjp8VxozbaWkqsh0YLBVm0CmD4xdxEnijalZci/exec";
+<script>
+    // 請確認此處與您的 Google Apps Script (GAS) 網址一致
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxyo4Mj1t8m6AxNrySmvQkHY2ffKCYjp8VxozbaWkqsh0YLBVm0CmD4xdxEnijalZci/exec";
 
-      function takeSnapshot() {
+    function takeSnapshot() {
         const statusMsg = document.getElementById('status-message');
+        const username = document.getElementById('username').value.trim();
+        const location = document.getElementById('location').value.trim();
+
+        // 表單驗證
+        if (!username || !location) {
+            statusMsg.innerText = "請先輸入拍照人員與地點！";
+            statusMsg.style.display = 'block';
+            setTimeout(() => statusMsg.style.display = 'none', 3000);
+            return;
+        }
+
         statusMsg.innerText = "處理中...";
         statusMsg.style.display = 'block';
-
+        
         const video = document.querySelector('video');
         const arCanvas = document.querySelector('.a-canvas');
         
         if (!video || !arCanvas) {
-          statusMsg.innerText = "無法取得相機畫面";
-          setTimeout(() => statusMsg.style.display = 'none', 3000);
-          return;
+            statusMsg.innerText = "無法取得相機畫面";
+            setTimeout(() => statusMsg.style.display = 'none', 3000);
+            return;
         }
-
+        
         const mergeCanvas = document.createElement('canvas');
         mergeCanvas.width = video.videoWidth || window.innerWidth;
         mergeCanvas.height = video.videoHeight || window.innerHeight;
         const ctx = mergeCanvas.getContext('2d');
-
+        
         // 1. 畫上相機背景畫面
         ctx.drawImage(video, 0, 0, mergeCanvas.width, mergeCanvas.height);
         
-        // 2. 疊加 AR 繪圖畫面
+        // 2. 疊加繪圖層（此時已無 AR 3D 物件，但保留此行以維持結構穩定）
         ctx.drawImage(arCanvas, 0, 0, mergeCanvas.width, mergeCanvas.height);
-
+        
         const base64Data = mergeCanvas.toDataURL('image/png');
+        
+        // 3. 自動生成符合格式的日期（例如 20260907）
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const dateString = `${yyyy}${mm}${dd}`;
 
+        // 4. 設定要求的存檔檔名：拍照人員_日期
+        const filename = `${username}_${dateString}`;
+        
         statusMsg.innerText = "正在上傳至雲端硬碟...";
-
+        
+        // 將圖片資料、檔名、地點等完整資訊打包傳送至後端
         fetch(GAS_WEB_APP_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8',
-          },
-          body: JSON.stringify({ image: base64Data })
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/plain;charset=utf-8',
+            },
+            body: JSON.stringify({ 
+                image: base64Data,
+                filename: filename,
+                username: username,
+                location: location,
+                date: dateString
+            })
         })
         .then(response => response.json())
         .then(data => {
-          if (data.success) {
-            statusMsg.innerText = "上傳成功！照片已存入雲端硬碟";
-          } else {
-            statusMsg.innerText = "上傳失敗：" + data.error;
-          }
-          setTimeout(() => statusMsg.style.display = 'none', 3000);
+            if (data.success) {
+                statusMsg.innerText = "上傳成功！照片已存入雲端硬碟";
+                // 成功後清空輸入框，方便下一位人員使用
+                document.getElementById('username').value = '';
+                document.getElementById('location').value = '';
+            } else {
+                statusMsg.innerText = "上傳失敗：" + data.error;
+            }
+            setTimeout(() => statusMsg.style.display = 'none', 3000);
         })
         .catch(error => {
-          statusMsg.innerText = "網路錯誤：" + error.message;
-          setTimeout(() => statusMsg.style.display = 'none', 3000);
+            statusMsg.innerText = "網路錯誤：" + error.message;
+            setTimeout(() => statusMsg.style.display = 'none', 3000);
         });
-      }
-    </script>
-  </body>
+    }
+</script>
+</body>
 </html>
